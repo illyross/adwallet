@@ -97,6 +97,37 @@ class CreditController extends Controller
             ], 200);
         }
 
+        // Check if this is a polling fallback for a Stripe checkout that was already processed
+        // Look for completed transactions with the same partner_purchase_id from metadata
+        $purchaseId = $validated['metadata']['purchase_id'] ?? null;
+        if ($purchaseId) {
+            $existingStripeTransaction = WalletTransaction::query()
+                ->where('wallet_account_id', $account->id)
+                ->where('partner_purchase_id', $purchaseId)
+                ->where('status', WalletTransaction::STATUS_COMPLETED)
+                ->whereNotNull('stripe_payment_intent') // Only Stripe-initiated transactions
+                ->first();
+
+            if ($existingStripeTransaction) {
+                // Stripe transaction already completed - return it instead of creating duplicate
+                Log::info('CreditController: Found existing Stripe transaction for purchase, returning it instead of creating duplicate', [
+                    'partner' => $partner,
+                    'user_id' => $partnerUserId,
+                    'purchase_id' => $purchaseId,
+                    'existing_transaction_id' => $existingStripeTransaction->id,
+                    'polling_transaction_id' => $transactionId,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'transaction_id' => $existingStripeTransaction->transaction_id ?? $existingStripeTransaction->reference,
+                    'balance_after' => $existingStripeTransaction->balance_after ?? $account->balance,
+                    'credited_at' => $existingStripeTransaction->completed_at?->toIso8601String() 
+                        ?? $existingStripeTransaction->processed_at?->toIso8601String(),
+                ], 200);
+            }
+        }
+
         // Process credit transaction atomically
         try {
             $result = DB::transaction(function () use (

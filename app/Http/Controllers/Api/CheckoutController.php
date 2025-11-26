@@ -82,7 +82,8 @@ class CheckoutController extends Controller
                 reference: $transaction->reference,
                 amount: $transaction->amount,
                 currency: $transaction->currency,
-                customerEmail: $userEmail,
+                customerEmail: $this->formatStripeEmail($account->id),
+                customerPhone: $userPhone ? $this->formatStripePhone($userPhone) : null,
             );
 
             $transaction->forceFill([
@@ -105,6 +106,7 @@ class CheckoutController extends Controller
         float $amount,
         string $currency,
         string $customerEmail,
+        ?string $customerPhone = null,
     ): \Stripe\Checkout\Session {
         $client = new \Stripe\StripeClient($secret);
 
@@ -112,7 +114,7 @@ class CheckoutController extends Controller
 
         $sessionParams = [
             'mode' => 'payment',
-            'customer_email' => $customerEmail, // Use placeholder email if needed
+            'customer_email' => $customerEmail,
             'phone_number_collection' => [
                 'enabled' => true, // Allow phone collection during checkout
             ],
@@ -136,6 +138,13 @@ class CheckoutController extends Controller
                 ],
             ],
         ];
+
+        // Add customer details if phone is provided
+        if ($customerPhone) {
+            $sessionParams['customer_details'] = [
+                'phone' => $customerPhone,
+            ];
+        }
 
         return $client->checkout->sessions->create($sessionParams);
     }
@@ -195,6 +204,58 @@ class CheckoutController extends Controller
     protected function isPlaceholderEmail(string $email): bool
     {
         return preg_match('/^(phone-|user-)\d+@.+\.local$/', $email) === 1;
+    }
+
+    /**
+     * Format email for Stripe as wallet{account_id}@escortxxx.ch
+     */
+    protected function formatStripeEmail(int $accountId): string
+    {
+        return "wallet{$accountId}@escortxxx.ch";
+    }
+
+    /**
+     * Format phone number for Stripe from +41799450139 to 079 945 01 39
+     */
+    protected function formatStripePhone(string $phone): string
+    {
+        // Remove the + sign and country code
+        // For Swiss numbers: +41XXXXXXXXX -> 0XXXXXXXXX
+        if (preg_match('/^\+41(\d{9})$/', $phone, $matches)) {
+            $digits = $matches[1];
+            // Format as: 0XX XXX XX XX
+            return sprintf(
+                '0%s %s %s %s',
+                substr($digits, 0, 2),
+                substr($digits, 2, 3),
+                substr($digits, 5, 2),
+                substr($digits, 7, 2)
+            );
+        }
+
+        // If it doesn't match Swiss format, try to format as-is
+        // Remove + and format remaining digits
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+        
+        // If it starts with 41, remove it and add 0
+        if (str_starts_with($digits, '41') && strlen($digits) === 11) {
+            $digits = '0' . substr($digits, 2);
+        }
+
+        // Format as: 0XX XXX XX XX if 9 digits after 0
+        if (preg_match('/^0(\d{9})$/', $digits, $matches)) {
+            $digits = $matches[1];
+            return sprintf(
+                '0%s %s %s %s',
+                substr($digits, 0, 2),
+                substr($digits, 2, 3),
+                substr($digits, 5, 2),
+                substr($digits, 7, 2)
+            );
+        }
+
+        // Fallback: return as-is if we can't format it
+        return $phone;
     }
 }
 
