@@ -55,10 +55,18 @@ class LoginController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        // Get redirect URL before invalidating session
+        $redirectBackUrl = $request->session()->get('wallet.redirect_back_url');
+        
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // If user came from partner platform, redirect back there
+        if ($redirectBackUrl) {
+            return redirect()->away($redirectBackUrl);
+        }
 
         return redirect()->route('home');
     }

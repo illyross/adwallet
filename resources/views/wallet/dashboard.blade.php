@@ -138,6 +138,14 @@
                 <h1 class="title">Advertising credits</h1>
                 <p class="subtitle">Manage your balance and see recent top‑ups across partner marketplaces.</p>
             </div>
+            <div>
+                <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                    @csrf
+                    <button type="submit" style="background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 0.5rem; padding: 0.5rem 1rem; color: #cbd5f5; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(148, 163, 184, 0.3)'; this.style.borderColor='rgba(148, 163, 184, 0.5)';" onmouseout="this.style.background='rgba(148, 163, 184, 0.2)'; this.style.borderColor='rgba(148, 163, 184, 0.35)';">
+                        Abmelden
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="grid">
