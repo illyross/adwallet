@@ -44,7 +44,7 @@ Route::middleware('auth')
             });
     });
 
-Route::post('/sso/{partner}', SsoController::class)
+Route::get('/sso/{partner}', SsoController::class)
     ->middleware(['throttle:30,1', 'partner.ip'])
     ->name('sso.handle');
 
