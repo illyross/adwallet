@@ -20,7 +20,11 @@ class CheckoutController extends Controller
             'package.amount' => ['required', 'numeric', 'min:0.5'],
             'package.currency' => ['required', 'string', 'max:3'],
             'purchase.id' => ['required', 'integer'],
-            'callback_url' => ['required', 'url'],
+            'callback_url' => ['required', 'url', function ($attribute, $value, $fail) {
+                if ($this->isUnreachableUrl($value)) {
+                    $fail('The callback URL must be publicly accessible. Localhost and test domains are not allowed in production.');
+                }
+            }],
             'success_url' => ['required', 'url'],
             'cancel_url' => ['required', 'url'],
         ]);
@@ -48,6 +52,7 @@ class CheckoutController extends Controller
             'credits' => (int) data_get($validated, 'package.credits'),
             'amount' => (float) data_get($validated, 'package.amount'),
             'currency' => strtoupper((string) data_get($validated, 'package.currency', 'CHF')),
+            'type' => WalletTransaction::TYPE_CREDIT,
             'status' => WalletTransaction::STATUS_PENDING,
             'payload' => $request->all(),
             'callback_url' => $validated['callback_url'],
@@ -116,6 +121,41 @@ class CheckoutController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Check if a URL is unreachable from production (localhost, test domains, etc.)
+     */
+    protected function isUnreachableUrl(string $url): bool
+    {
+        // Allow localhost/test domains only in local/testing environments
+        if (app()->environment(['local', 'testing'])) {
+            return false;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        
+        if (! $host) {
+            return true;
+        }
+
+        // Check for localhost variants
+        $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+        if (in_array(strtolower($host), $localHosts)) {
+            return true;
+        }
+
+        // Check for .test, .local, .localhost TLDs
+        if (preg_match('/\.(test|local|localhost)(:\d+)?$/i', $host)) {
+            return true;
+        }
+
+        // Check for common local development patterns
+        if (preg_match('/\.(test|local|localhost)$/i', $host)) {
+            return true;
+        }
+
+        return false;
     }
 }
 

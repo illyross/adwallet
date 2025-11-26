@@ -61,7 +61,16 @@ class StripeCompleteController extends Controller
             $account = $transaction->account()->lockForUpdate()->first();
 
             if ($newStatus === WalletTransaction::STATUS_COMPLETED && ! $wasCompleted) {
-                $newBalance = $account->balance + $transaction->credits;
+                // Handle credit (top-up) and debit (spending) transactions
+                if ($transaction->isCredit()) {
+                    $newBalance = $account->balance + $transaction->credits;
+                } elseif ($transaction->isDebit()) {
+                    $newBalance = $account->balance - $transaction->credits;
+                } else {
+                    // Default to credit for backward compatibility
+                    $newBalance = $account->balance + $transaction->credits;
+                }
+                
                 $account->forceFill(['balance' => $newBalance, 'last_activity_at' => now()])->save();
                 $transaction->balance_after = $newBalance;
             }
@@ -121,6 +130,27 @@ class StripeCompleteController extends Controller
 
         $payload['signature'] = $signature;
 
+        // Check if URL is unreachable before attempting
+        if ($this->isUnreachableUrl($transaction->callback_url)) {
+            Log::warning('Partner webhook skipped - unreachable URL (localhost/test domain).', [
+                'partner' => $partnerKey,
+                'transaction_id' => $transaction->id,
+                'url' => $transaction->callback_url,
+            ]);
+
+            WalletWebhookEvent::create([
+                'partner' => $partnerKey,
+                'wallet_transaction_id' => $transaction->id,
+                'event' => $event,
+                'url' => $transaction->callback_url,
+                'success' => false,
+                'error' => 'Unreachable URL (localhost/test domain) - webhook skipped',
+                'payload' => $payload,
+            ]);
+
+            return;
+        }
+
         try {
             $response = Http::asJson()
                 ->timeout(5)
@@ -140,6 +170,7 @@ class StripeCompleteController extends Controller
                 'partner' => $partnerKey,
                 'transaction_id' => $transaction->id,
                 'error' => $exception->getMessage(),
+                'url' => $transaction->callback_url,
             ]);
 
             WalletWebhookEvent::create([
@@ -152,6 +183,41 @@ class StripeCompleteController extends Controller
                 'payload' => $payload,
             ]);
         }
+    }
+
+    /**
+     * Check if a URL is unreachable from production (localhost, test domains, etc.)
+     */
+    protected function isUnreachableUrl(string $url): bool
+    {
+        // Allow localhost/test domains only in local/testing environments
+        if (app()->environment(['local', 'testing'])) {
+            return false;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        
+        if (! $host) {
+            return true;
+        }
+
+        // Check for localhost variants
+        $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+        if (in_array(strtolower($host), $localHosts)) {
+            return true;
+        }
+
+        // Check for .test, .local, .localhost TLDs
+        if (preg_match('/\.(test|local|localhost)(:\d+)?$/i', $host)) {
+            return true;
+        }
+
+        // Check for common local development patterns
+        if (preg_match('/\.(test|local|localhost)$/i', $host)) {
+            return true;
+        }
+
+        return false;
     }
 }
 
