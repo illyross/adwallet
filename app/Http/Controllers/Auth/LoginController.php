@@ -10,8 +10,23 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function showLoginForm(): View
+    public function showLoginForm(): View|RedirectResponse
     {
+        // If user is already authenticated, redirect to appropriate dashboard
+        if (Auth::check()) {
+            if (Auth::user()->is_admin) {
+                return redirect()->route('admin.wallet.sso');
+            }
+            
+            // Check if they have wallet session data
+            if (session()->has('wallet.partner') && session()->has('wallet.partner_user_id')) {
+                return redirect()->route('wallet.dashboard');
+            }
+            
+            // If authenticated but no wallet session, redirect to home
+            return redirect()->route('home');
+        }
+        
         return view('auth.login');
     }
 

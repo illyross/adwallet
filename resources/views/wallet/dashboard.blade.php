@@ -177,12 +177,18 @@
                     @foreach ($transactions as $tx)
                         <tr>
                             <td>{{ $tx->created_at?->format('Y-m-d H:i') }}</td>
-                            <td>{{ ucfirst($tx->status) }}</td>
-                            <td class="{{ $tx->credits > 0 ? 'amount-pos' : 'amount-neg' }}">
-                                {{ $tx->credits > 0 ? '+' : '' }}{{ number_format($tx->credits) }}
+                            <td>
+                                @if($tx->isDebit())
+                                    Debit
+                                @else
+                                    {{ ucfirst($tx->status) }}
+                                @endif
+                            </td>
+                            <td class="{{ $tx->isCredit() ? 'amount-pos' : 'amount-neg' }}">
+                                {{ $tx->isCredit() ? '+' : '-' }}{{ number_format($tx->credits) }}
                             </td>
                             <td class="balance-cell">
-                                {{ $account ? number_format($account->balance) : '-' }}
+                                {{ $tx->balance_after !== null ? number_format($tx->balance_after) : ($account ? number_format($account->balance) : '-') }}
                             </td>
                         </tr>
                     @endforeach

@@ -152,20 +152,15 @@
                                     <a href="{{ route('wallet.dashboard') }}" class="mt-6 block w-full rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/30 active:scale-100 text-center">
                                         <span class="flex items-center justify-center gap-2">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                             </svg>
-                                            Guthaben aufladen
+                                            Wallet öffnen
                                         </span>
                                     </a>
                                 @else
-                                    <a href="{{ route('login') }}" class="mt-6 block w-full rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/30 active:scale-100 text-center">
-                                        <span class="flex items-center justify-center gap-2">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            Guthaben aufladen
-                                        </span>
-                                    </a>
+                                    <p class="mt-6 text-xs leading-relaxed text-slate-500 text-center">
+                                        Guthaben können nur über Partner-Plattformen aufgeladen werden.
+                                    </p>
                                 @endauth
 
                                 {{-- Info text --}}
@@ -234,7 +229,7 @@
                         </div>
                         <h3 class="mb-3 text-xl font-bold text-slate-900">Guthaben aufladen</h3>
                         <p class="text-sm leading-relaxed text-slate-600">
-                            Erstellen oder greifen Sie auf Ihr adwallet-Konto zu, wählen Sie einen Betrag in CHF und schließen Sie eine sichere Aufladung mit Ihrer bevorzugten Zahlungsmethode ab. 1 CHF wird in 1 Guthaben umgewandelt.
+                            Laden Sie Guthaben über eine Partner-Plattform auf, die adwallet integriert hat. Wählen Sie einen Betrag in CHF und schließen Sie eine sichere Aufladung ab. 1 CHF wird in 1 Guthaben umgewandelt.
                         </p>
                     </div>
                     <div class="relative rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur-sm">
