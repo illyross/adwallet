@@ -24,7 +24,12 @@ class SsoController extends Controller
 
         $data = $request->validate([
             'user_id' => ['required', 'integer'],
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) {
+                if (! $this->isValidEmail($value)) {
+                    $fail('The email must be a valid email address or a placeholder email (phone-{digits}@{domain}.local).');
+                }
+            }],
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+[1-9]\d{1,14}$/'],
             'display_name' => ['nullable', 'string', 'max:255'],
             'role' => ['nullable', 'string', 'max:100'],
             'nonce' => ['required', 'string', 'max:255'],
@@ -61,6 +66,7 @@ class SsoController extends Controller
             ],
             [
                 'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
                 'display_name' => $data['display_name'] ?? null,
                 'role' => $data['role'] ?? null,
                 'last_activity_at' => now(),
@@ -96,6 +102,20 @@ class SsoController extends Controller
         $request->session()->put('wallet.redirect_back_url', $data['redirect_back_url']);
 
         return redirect()->route('wallet.dashboard');
+    }
+
+    /**
+     * Check if an email is valid (either real email or placeholder email)
+     */
+    protected function isValidEmail(string $email): bool
+    {
+        // Check if it's a placeholder email (phone-{digits}@{domain}.local or user-{id}@{domain}.local)
+        if (preg_match('/^(phone-|user-)\d+@.+\.local$/', $email)) {
+            return true;
+        }
+        
+        // Check if it's a valid email
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 }
 

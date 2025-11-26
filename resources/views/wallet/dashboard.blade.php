@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="utf-8">
-    <title>Adwallet – Wallet</title>
+    <title>Adwallet – Guthaben</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -134,9 +134,9 @@
     <div class="frame">
         <div class="header">
             <div>
-                <div class="badge">Wallet</div>
-                <h1 class="title">Advertising credits</h1>
-                <p class="subtitle">Manage your balance and see recent top‑ups across partner marketplaces.</p>
+                <div class="badge">Guthaben</div>
+                <h1 class="title">Werbe-Guthaben</h1>
+                <p class="subtitle">Verwalten Sie Ihr Guthaben und sehen Sie aktuelle Aufladungen über Partner-Plattformen.</p>
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
                 @if(session('wallet.redirect_back_url'))
@@ -158,44 +158,46 @@
 
         <div class="grid">
             <div class="card">
-                <div class="label">Current balance</div>
+                <div class="label">Aktuelles Guthaben</div>
                 <div class="value-xl">{{ $account ? number_format($account->balance) : '0' }}</div>
-                <div class="value-sm">1 CHF = 1 credit</div>
+                <div class="value-sm">1 CHF = 1 Guthaben</div>
             </div>
             <div class="card card-muted">
-                <div class="label">Account</div>
+                <div class="label">Konto</div>
                 <div class="value-sm">
                     @if($account)
-                        {{ $account->email ?? 'Wallet user' }}<br>
+                        {{ $account->email ?? 'Guthaben-Benutzer' }}<br>
                         Partner: {{ $account->partner }} · ID: {{ $account->partner_user_id }}
                     @else
-                        Kein Wallet-Konto vorhanden
+                        Kein Guthaben-Konto vorhanden
                     @endif
                 </div>
             </div>
         </div>
 
         <div class="transactions">
-            <div class="label" style="margin-bottom:0.5rem;">Recent activity</div>
+            <div class="label" style="margin-bottom:0.5rem;">Aktuelle Aktivität</div>
             @if ($transactions->isEmpty())
-                <p class="value-sm">No wallet activity yet. Top up credits from your partner platform to see them here.</p>
+                <p class="value-sm">Noch keine Guthaben-Aktivität. Laden Sie Guthaben über Ihre Partner-Plattform auf, um sie hier zu sehen.</p>
             @else
                 <table>
                     <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Credits</th>
-                        <th>Balance</th>
+                        <th>Datum</th>
+                        <th>Typ</th>
+                        <th>Guthaben</th>
+                        <th>Saldo</th>
                     </tr>
                     </thead>
                     <tbody>
                     @foreach ($transactions as $tx)
                         <tr>
-                            <td>{{ $tx->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>{{ $tx->created_at?->format('d.m.Y H:i') }}</td>
                             <td>
                                 @if($tx->isDebit())
-                                    Debit
+                                    Belastung
+                                @elseif($tx->isCredit())
+                                    Gutschrift
                                 @else
                                     {{ ucfirst($tx->status) }}
                                 @endif

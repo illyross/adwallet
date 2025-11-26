@@ -15,7 +15,12 @@ class CheckoutController extends Controller
         $validated = $request->validate([
             'reference' => ['required', 'string', 'max:255'],
             'user.id' => ['required', 'integer'],
-            'user.email' => ['nullable', 'email'],
+            'user.email' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) {
+                if (! $this->isValidEmail($value)) {
+                    $fail('The email must be a valid email address or a placeholder email (phone-{digits}@{domain}.local).');
+                }
+            }],
+            'user.phone' => ['nullable', 'string', 'max:20', 'regex:/^\+[1-9]\d{1,14}$/'],
             'package.credits' => ['required', 'integer', 'min:1'],
             'package.amount' => ['required', 'numeric', 'min:0.5'],
             'package.currency' => ['required', 'string', 'max:3'],
@@ -35,13 +40,17 @@ class CheckoutController extends Controller
         
         $partnerUserId = (int) data_get($validated, 'user.id');
 
+        $userEmail = data_get($validated, 'user.email');
+        $userPhone = data_get($validated, 'user.phone');
+        
         $account = WalletAccount::query()->updateOrCreate(
             [
                 'partner' => $partner,
                 'partner_user_id' => $partnerUserId,
             ],
             [
-                'email' => data_get($validated, 'user.email'),
+                'email' => $userEmail,
+                'phone' => $userPhone,
                 'last_activity_at' => now(),
             ],
         );
@@ -73,6 +82,7 @@ class CheckoutController extends Controller
                 reference: $transaction->reference,
                 amount: $transaction->amount,
                 currency: $transaction->currency,
+                customerEmail: $userEmail,
             );
 
             $transaction->forceFill([
@@ -94,13 +104,18 @@ class CheckoutController extends Controller
         string $reference,
         float $amount,
         string $currency,
+        string $customerEmail,
     ): \Stripe\Checkout\Session {
         $client = new \Stripe\StripeClient($secret);
 
         $unitAmount = (int) round($amount * 100);
 
-        return $client->checkout->sessions->create([
+        $sessionParams = [
             'mode' => 'payment',
+            'customer_email' => $customerEmail, // Use placeholder email if needed
+            'phone_number_collection' => [
+                'enabled' => true, // Allow phone collection during checkout
+            ],
             'success_url' => route('stripe.complete', ['reference' => $reference]) . '?status=success',
             'cancel_url' => route('stripe.complete', ['reference' => $reference]) . '?status=cancel',
             'metadata' => [
@@ -120,7 +135,9 @@ class CheckoutController extends Controller
                     ],
                 ],
             ],
-        ]);
+        ];
+
+        return $client->checkout->sessions->create($sessionParams);
     }
 
     /**
@@ -156,6 +173,28 @@ class CheckoutController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Check if an email is valid (either real email or placeholder email)
+     */
+    protected function isValidEmail(string $email): bool
+    {
+        // Check if it's a placeholder email (phone-{digits}@{domain}.local or user-{id}@{domain}.local)
+        if (preg_match('/^(phone-|user-)\d+@.+\.local$/', $email)) {
+            return true;
+        }
+        
+        // Check if it's a valid email
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Check if an email is a placeholder email
+     */
+    protected function isPlaceholderEmail(string $email): bool
+    {
+        return preg_match('/^(phone-|user-)\d+@.+\.local$/', $email) === 1;
     }
 }
 
