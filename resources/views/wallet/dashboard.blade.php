@@ -32,8 +32,16 @@
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
         }
         .badge {
             font-size: 0.75rem;
@@ -61,6 +69,11 @@
             grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
             gap: 1.25rem;
             margin-top: 1.75rem;
+        }
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
         }
         .card {
             border-radius: 1.25rem;
@@ -127,6 +140,69 @@
             text-align: right;
             color: #e5e7eb;
         }
+        @media (max-width: 768px) {
+            .shell {
+                padding: 1rem 0.75rem;
+            }
+            .frame {
+                padding: 1.25rem 1rem 1.5rem;
+                border-radius: 1rem;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .title {
+                font-size: 1.35rem;
+            }
+            .subtitle {
+                font-size: 0.85rem;
+            }
+            .value-xl {
+                font-size: 1.75rem;
+            }
+            .transactions {
+                padding: 1rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                min-width: 500px;
+                font-size: 0.75rem;
+            }
+            th, td {
+                padding: 0.5rem 0.4rem;
+            }
+            .card {
+                padding: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .shell {
+                padding: 0.75rem 0.5rem;
+            }
+            .frame {
+                padding: 1rem 0.75rem 1.25rem;
+            }
+            .title {
+                font-size: 1.2rem;
+            }
+            .value-xl {
+                font-size: 1.5rem;
+            }
+            .header-actions {
+                flex-direction: column;
+            }
+            .header-actions a,
+            .header-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -138,18 +214,18 @@
                 <h1 class="title">Werbe-Guthaben</h1>
                 <p class="subtitle">Verwalten Sie Ihr Guthaben und sehen Sie aktuelle Aufladungen über Partner-Plattformen.</p>
             </div>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div class="header-actions">
                 @if(session('wallet.redirect_back_url'))
-                    <a href="{{ session('wallet.redirect_back_url') }}" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 0.5rem; padding: 0.5rem 1rem; color: #93c5fd; font-size: 0.875rem; text-decoration: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'; this.style.borderColor='rgba(59, 130, 246, 0.5)';" onmouseout="this.style.background='rgba(59, 130, 246, 0.2)'; this.style.borderColor='rgba(59, 130, 246, 0.35)';">
-                        <svg style="width: 1rem; height: 1rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <a href="{{ session('wallet.redirect_back_url') }}" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 0.5rem; padding: 0.5rem 1rem; color: #93c5fd; font-size: 0.875rem; text-decoration: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'; this.style.borderColor='rgba(59, 130, 246, 0.5)';" onmouseout="this.style.background='rgba(59, 130, 246, 0.2)'; this.style.borderColor='rgba(59, 130, 246, 0.35)';">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Zurück zur Plattform
+                        <span>Zurück</span>
                     </a>
                 @endif
                 <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                     @csrf
-                    <button type="submit" style="background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 0.5rem; padding: 0.5rem 1rem; color: #cbd5f5; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(148, 163, 184, 0.3)'; this.style.borderColor='rgba(148, 163, 184, 0.5)';" onmouseout="this.style.background='rgba(148, 163, 184, 0.2)'; this.style.borderColor='rgba(148, 163, 184, 0.35)';">
+                    <button type="submit" style="background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 0.5rem; padding: 0.5rem 1rem; color: #cbd5f5; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(148, 163, 184, 0.3)'; this.style.borderColor='rgba(148, 163, 184, 0.5)';" onmouseout="this.style.background='rgba(148, 163, 184, 0.2)'; this.style.borderColor='rgba(148, 163, 184, 0.35)';">
                         Abmelden
                     </button>
                 </form>
