@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\WalletAccount;
 use App\Models\WalletTransaction;
 use Illuminate\Http\JsonResponse;
@@ -82,7 +83,7 @@ class CheckoutController extends Controller
                 reference: $transaction->reference,
                 amount: $transaction->amount,
                 currency: $transaction->currency,
-                customerEmail: $this->formatStripeEmail($account->id),
+                customerEmail: $this->formatStripeEmail($account->id, $partner),
                 customerPhone: $userPhone ? $this->formatStripePhone($userPhone) : null,
             );
 
@@ -207,11 +208,41 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Format email for Stripe as wallet{account_id}@escortxxx.ch
+     * Format email for Stripe as wallet{account_id}@{partner_domain}
+     * Gets domain from partner config or Partner model's website_url
      */
-    protected function formatStripeEmail(int $accountId): string
+    protected function formatStripeEmail(int $accountId, string $partnerKey): string
     {
-        return "wallet{$accountId}@escortxxx.ch";
+        $domain = $this->getPartnerEmailDomain($partnerKey);
+        
+        return "wallet{$accountId}@{$domain}";
+    }
+
+    /**
+     * Get the email domain for a partner
+     * Checks config first, then Partner model, then falls back to default
+     */
+    protected function getPartnerEmailDomain(string $partnerKey): string
+    {
+        // First, check if explicitly configured in services.partners config
+        $partnerConfig = config("services.partners.{$partnerKey}", []);
+        $domain = $partnerConfig['stripe_email_domain'] ?? null;
+
+        if ($domain) {
+            return $domain;
+        }
+
+        // Second, try to extract from Partner model's website_url
+        $partner = Partner::where('key', $partnerKey)->first();
+        if ($partner && $partner->website_url) {
+            $parsedUrl = parse_url($partner->website_url);
+            if (isset($parsedUrl['host'])) {
+                return $parsedUrl['host'];
+            }
+        }
+
+        // Fallback: use adwallet.ch as default domain
+        return 'adwallet.ch';
     }
 
     /**

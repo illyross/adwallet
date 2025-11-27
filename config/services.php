@@ -41,12 +41,21 @@ return [
      *
      * Example env:
      * ADWALLET_PARTNER_ESCORT_TOKEN=...
+     * ADWALLET_PARTNER_ESCORT_WEBHOOK_SECRET=...
+     * ADWALLET_PARTNER_ESCORT_SSO_SECRET=...
+     * ADWALLET_PARTNER_ESCORT_STRIPE_EMAIL_DOMAIN=escortxxx.ch (optional)
+     *
+     * stripe_email_domain: Optional. Domain used for Stripe customer emails.
+     *                      Format: wallet{account_id}@{stripe_email_domain}
+     *                      If not set, will try to extract from Partner model's website_url.
+     *                      Falls back to 'adwallet.ch' if neither is available.
      */
     'partners' => [
         'escort' => [
             'api_token' => env('ADWALLET_PARTNER_ESCORT_TOKEN'),
             'webhook_secret' => env('ADWALLET_PARTNER_ESCORT_WEBHOOK_SECRET'),
             'sso_secret' => env('ADWALLET_PARTNER_ESCORT_SSO_SECRET'),
+            'stripe_email_domain' => env('ADWALLET_PARTNER_ESCORT_STRIPE_EMAIL_DOMAIN', 'escortxxx.ch'),
         ],
     ],
 
